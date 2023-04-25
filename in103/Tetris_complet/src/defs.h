@@ -10,11 +10,10 @@
 #include "SDL2/SDL_ttf.h"
 #include "SDL2_gfxPrimitives.h"
 
-
 #ifndef _GLOBAL_CONSTANTS
 #define _GLOBAL_CONSTANTS
 
-#define WINDOW_TITLE "tetris"
+#define WINDOW_TITLE "tetris-sdl-c"
 
 // a block 'pixel' of a playing field is 15px by 15px in size
 #define BLOCK_SIZE 20
