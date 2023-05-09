@@ -10,7 +10,6 @@
 #include "SDL2/SDL_ttf.h"
 #include "SDL2_gfxPrimitives.h"
 
-
 #ifndef _GLOBAL_CONSTANTS
 #define _GLOBAL_CONSTANTS
 

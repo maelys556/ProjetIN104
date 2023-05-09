@@ -32,10 +32,25 @@ typedef struct {
 } Tetromino_Movement;
 
 typedef enum {
-
+    NONE,
+    RIGHT,
+    UP,
+    LEFT, 
+    DOWN, 
+    ROTATE,
+    RESTART,
+    AUTO_DROP,
 } Tetris_Action;
 
 typedef enum {
+    EMPTY = 0xFFB3C0CC,
+    TEAL = 0xFFFFDB7F,
+    BLUE = 0xFFD97400,
+    ORANGE = 0XFF1B85FF,
+    YELLOW = 0xFF00DCFF,
+    GREEN = 0xFF40CC2E,
+    PURPLE = 0xFF4B1485,
+    RED = 0xFF4B59F2
 
 } Color_Block;
 
@@ -43,6 +58,42 @@ typedef enum {
 // defines the action to apply to current tetromino
 extern Tetris_Action TETROMINO_ACTION;
 
+// Color in function of the form of the Tetromino 
+
+const static Tetromino I = { // je comprends pas les 4 entrées
+    {0x0F00, 0x2222, 0x00F0, 0x4444},
+    TEAL
+};
+
+const static Tetromino J = {
+    {0x8E00, 0x6440, 0x0E20, 0x44C0},
+    BLUE
+};
+
+const static Tetromino L = {
+    {0x2E00, 0x4460, 0x0E80, 0xC440},
+    ORANGE
+};
+
+const static Tetromino O = {
+    {0x6600, 0x6600, 0x6600, 0x6600},
+    YELLOW
+};
+
+const static Tetromino S = {
+    {0x6C00, 0x4620, 0x06C0, 0x8c40},
+    GREEN
+};
+
+const static Tetromino T = {
+    {0x4E00, 0x4640, 0x0E40, 0x4C40},
+    PURPLE
+};
+
+const static Tetromino Z = {
+    {0xC600, 0x2640, 0x0C60, 0x4C80},
+    RED
+};
 
 // simple array to store coords of blocks rendered on playing field.
 // Each tetromino has 4 blocks with total of 4 coordinates.
