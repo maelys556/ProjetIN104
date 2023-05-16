@@ -33,13 +33,14 @@ typedef struct {
 
 typedef enum {
     NONE,
-    RIGHT,
-    UP,
-    LEFT, 
     DOWN, 
+    LEFT,
+    RIGHT,
+    DROP,
     ROTATE,
-    RESTART,
     AUTO_DROP,
+    RESTART,
+
 } Tetris_Action;
 
 typedef enum {
@@ -60,37 +61,37 @@ extern Tetris_Action TETROMINO_ACTION;
 
 // Color in function of the form of the Tetromino 
 
-const static Tetromino I = { // je comprends pas les 4 entrées
+const static Tetromino TETRA_I = { // je comprends pas les 4 entrées
     {0x0F00, 0x2222, 0x00F0, 0x4444},
     TEAL
 };
 
-const static Tetromino J = {
+const static Tetromino TETRA_J = {
     {0x8E00, 0x6440, 0x0E20, 0x44C0},
     BLUE
 };
 
-const static Tetromino L = {
+const static Tetromino TETRA_L = {
     {0x2E00, 0x4460, 0x0E80, 0xC440},
     ORANGE
 };
 
-const static Tetromino O = {
+const static Tetromino TETRA_O = {
     {0x6600, 0x6600, 0x6600, 0x6600},
     YELLOW
 };
 
-const static Tetromino S = {
+const static Tetromino TETRA_S = {
     {0x6C00, 0x4620, 0x06C0, 0x8c40},
     GREEN
 };
 
-const static Tetromino T = {
+const static Tetromino TETRA_T = {
     {0x4E00, 0x4640, 0x0E40, 0x4C40},
     PURPLE
 };
 
-const static Tetromino Z = {
+const static Tetromino TETRA_Z = {
     {0xC600, 0x2640, 0x0C60, 0x4C80},
     RED
 };
