@@ -2,7 +2,8 @@
 
 
 void init_graphics() {
-    render_changed = false //the game hasn't started, open a window
+    render_changed = false; 
+    Uint32 flags = SDL_WINDOW_SHOWN; //the game hasn't started, open a window
     window = SDL_CreateWindow(
         // title of the window 
         WINDOW_TITLE, 
@@ -40,7 +41,7 @@ void updateRender() { // ?
 
 void draw_block(uint8_t x, uint8_t y, uint32_t color) {
 
-    assert(x>=0 && y>=0 && x<PLAYFIELD_HEIGHT && y<PLAYFIELD_WEIGHT)
+    assert(x>=0 && y>=0 && x<PLAYFIELD_HEIGHT && y<PLAYFIELD_HEIGHT);
 
     //change of scale (affine transformation) from (x,y) to the coords of each corner of a block : 
     // coords block upper left
