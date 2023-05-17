@@ -2,8 +2,8 @@
 
 
 void init_graphics() {
-    render_changed = false; 
-    Uint32 flags = SDL_WINDOW_SHOWN; //the game hasn't started, open a window
+    SDL_Window* window = NULL;
+    render_changed = false; //the game hasn't started, open a window
     window = SDL_CreateWindow(
         // title of the window 
         WINDOW_TITLE, 
@@ -12,15 +12,52 @@ void init_graphics() {
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
         
         //initial size of the window 
-        WINDOW_WIDTH, WINDOW_HEIGHT, flags);
+        WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_SHOWN);
 
     //window is already defined in init.h (its type: SDL_Window*)
+
+    // window = SDL_CreateWindow("Tetris", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+
+    // if (window == NULL) {
+    //     printf("Erreur lors de la création de la fenêtre: %s\n", SDL_GetError());
+    //     SDL_Quit();
+    //     return 1;
+    // }
+
     if (window==NULL) { //if the previous function did not work, window = NULL, so, an error message pops up.
         fprintf(stderr,
                 "\nTTF_Init Error:  %s\n",
                 SDL_GetError());
         exit(1);
     }
+
+    render = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
+
+        if (render == NULL) {
+        fprintf(stderr,
+                "\nSDL_CreateRenderer Error:  %s\n",
+                SDL_GetError());
+        exit(1);
+    }
+
+    SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_BLEND);
+
+    // texture for render context
+    display = SDL_CreateTexture(render, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    SDL_SetRenderTarget(render, display);
+
+    // Load font
+    gFont = TTF_OpenFont("src/font/Inconsolata-Regular.ttf", 30);
+
+    if (gFont == NULL) {
+        fprintf(stderr,
+                "\nTTF_OpenFont Error:  %s\n",
+                SDL_GetError());
+        exit(1);
+    }
+
+    TTF_SetFontHinting(gFont, TTF_HINTING_MONO);
 }
 
 void setRenderChanged() {

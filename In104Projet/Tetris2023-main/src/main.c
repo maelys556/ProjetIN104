@@ -46,8 +46,10 @@ int main(int argc, const char *argv[]) {
 
     // Start up SDL, and make sure it went ok
     //
+    printf("ok");
     uint32_t flags = SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS;
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+
+    if (SDL_Init(SDL_INIT_EVERYTHING) < 0) { // != 0 ?
 
         fprintf(stderr,
                 "\nUnable to initialize SDL:  %s\n",

@@ -123,8 +123,6 @@ void initTetris() {
     }
     cb_timer = 0;
 
-    TETROMINO_ACTION = NONE;
-
     // Empty the playfield
     int i = PLAYFIELD_HEIGHT * PLAYFIELD_WIDTH;
     while (i --> 0) {
@@ -243,13 +241,8 @@ void render_score() {
 
     sds string_score = printfcomma(score);
 
-    // SDL_Surface* textSurface = SDL_CreateRGBSurface(0,100,100,32,0,0,0,0);
-
-   TTF_Font* defaultFont = NULL;
-   // SDL_Color textColor = {255, 255, 255}; // Couleur du texte (blanc dans cet exemple)
-    SDL_Surface* textSurface = TTF_RenderText_Blended(defaultFont, string_score, textColor);
-
-    // SDL_Surface* textSurface = TTF_RenderText_Blended(gFont, string_score, textColor);
+    // TTF_Font* defaultFont = NULL;
+    SDL_Surface* textSurface = TTF_RenderText_Blended(gFont, string_score, textColor);
 
     sdsfree(string_score);
 
