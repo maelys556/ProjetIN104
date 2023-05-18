@@ -23,6 +23,7 @@
 
 bool game_over = false;
 bool render_changed = false;
+bool newpiece = true;
 
 typedef struct {
     int x, y;
@@ -53,6 +54,9 @@ SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 TTF_Font* font = NULL;
 GameState game;
+
+Bag bag={0};
+    initializeBag(&bag);
 
 bool init() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -520,14 +524,6 @@ void drawScoreBoard(SDL_Renderer* renderer, int score, int lines)
 {
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE); // Couleur du texte (blanc)
     
-    // Code pour afficher le tableau des scores
-    // Cela peut inclure l'affichage du score actuel et du nombre de lignes effacées.
-    // Par exemple, vous pouvez utiliser SDL pour afficher du texte à l'écran.
-    // Voici un exemple basique pour afficher le score et le nombre de lignes effacées en haut de l'écran :
-    
-    std::string scoreText = "Score: " + std::to_string(score);
-    std::string linesText = "Lines: " + std::to_string(lines);
-    
     // Affiche le score en haut à gauche de l'écran
     renderText(renderer, scoreText, 10, 10);
     
@@ -537,6 +533,12 @@ void drawScoreBoard(SDL_Renderer* renderer, int score, int lines)
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE); // Réinitialise la couleur du rendu
 }
 
+void setCoords(tetromino* tetromino, int x, int y)
+{
+    piece->x = x;
+    piece->y = y;
+}
+
 
 // Gestion des événements
 void handleEvents() {
@@ -544,13 +546,13 @@ void handleEvents() {
         if(inHiddenLayer(board)) endgame=true;
         if (newpiece){ // Create a newpiece when "newpiece" is set to through
             int choice = updateBag(&bag);
-            piece=*Tetroarray[choice];
-            setCoords(&piece,5,2);
+            tetromino piece=*Tetroarray[choice];
+            setCoords(&tetromino,5,2);
             newpiece=false;
         }
         int value=0;
         SDL_Event event; 
-        while (SDL_PollEvent(&event)) {
+        while (SDL_PollEvent(&event)!= 0) {
             if (event.type == SDL_QUIT) {
                 game_over = true;
             }
