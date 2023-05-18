@@ -41,12 +41,13 @@
 
 
 #include "main.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
 int main(int argc, const char *argv[]) {
 
     // Start up SDL, and make sure it went ok
     //
-    printf("ok");
     uint32_t flags = SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS;
 
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) { // != 0 ?
@@ -61,7 +62,6 @@ int main(int argc, const char *argv[]) {
     atexit(cleanup);
 
     init();
-
     bool quit = false;
     while(!quit) {
 
@@ -72,6 +72,7 @@ int main(int argc, const char *argv[]) {
         updateTetris();
 
         updateRender();
+        printf("ok");
 
         // Set to ~60 fps.
         // 1000 ms/ 60 fps = 1/16 s^2/frame

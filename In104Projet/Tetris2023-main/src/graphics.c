@@ -43,21 +43,21 @@ void init_graphics() {
     SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_BLEND);
 
     // texture for render context
-    display = SDL_CreateTexture(render, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, WINDOW_WIDTH, WINDOW_HEIGHT);
+    SDL_Texture* display = SDL_CreateTexture(render, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, WINDOW_WIDTH, WINDOW_HEIGHT);
 
     SDL_SetRenderTarget(render, display);
 
     // Load font
-    gFont = TTF_OpenFont("src/font/Inconsolata-Regular.ttf", 30);
+    // gFont = TTF_OpenFont("src/font/Inconsolata-Regular.ttf", 30);
 
-    if (gFont == NULL) {
-        fprintf(stderr,
-                "\nTTF_OpenFont Error:  %s\n",
-                SDL_GetError());
-        exit(1);
-    }
+    // if (gFont == NULL) {
+    //     fprintf(stderr,
+    //             "\nTTF_OpenFont Error:  %s\n",
+    //             SDL_GetError());
+    //     exit(1);
+    // }
 
-    TTF_SetFontHinting(gFont, TTF_HINTING_MONO);
+    // TTF_SetFontHinting(gFont, TTF_HINTING_MONO);
 }
 
 void setRenderChanged() {
@@ -65,6 +65,7 @@ void setRenderChanged() {
 } //the function changes the bool render_changed to true, meaning that the render has to be changed
 
 void preRender() {
+    SDL_Texture* display = SDL_CreateTexture(render, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, WINDOW_WIDTH, WINDOW_HEIGHT);
     SDL_SetRenderTarget(render, display);
 }  //ok
 

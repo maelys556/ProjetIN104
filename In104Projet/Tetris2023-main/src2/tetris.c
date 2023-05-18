@@ -1,77 +1,3 @@
-// #include "tetris.h"
-
-
-// void draw_playing_field() {
-
-//     // loop var
-//     int i;
-
-//     // Set rendering clear color
-//     // This sets the 'background color'
-//     SDL_SetRenderDrawColor(render, 204, 192, 179, 255);
-
-//     // Clear the render
-//     // 'set' background color defined in SDL_SetRenderDrawColor(...)
-//     SDL_RenderClear(render);
-
-
-//     i = PLAYFIELD_HEIGHT * PLAYFIELD_WIDTH;
-//     while (i --> 0)
-//         set_playfield(i % PLAYFIELD_WIDTH, i / PLAYFIELD_WIDTH, playfield[i]);
-
-
-//     // Update the screen
-//     setRenderChanged();
-// }
-
-// Uint32 auto_drop_timer(Uint32 interval, void *param) {
-
-// }
-
-// void initTetris() {
-
-
-// }
-
-// void lockTetromino() {
-
-// }
-
-// void render_score() {
-
-// }
-
-// void updateTetris() {
-
-// }
-
-// void spawn_tetromino() {
-
-// }
-
-// bool can_render_tetromino(Tetromino_Movement tetra_request, uint8_t block_render_queue[]) {
-
-//     return true;
-// }
-
-// bool render_current_tetromino(Tetromino_Movement tetra_request) {
-
-//     return false;
-// }
-
-// bool render_tetromino(Tetromino_Movement tetra_request, uint8_t current_coords[]) {
-
-//     return true;
-// }
-
-// Color_Block get_playfield(uint8_t x, uint8_t y) {
-
-// }
-
-// void set_playfield(uint8_t x, uint8_t y, Color_Block color) {
-
-// }
-
 #include "tetris.h"
 
 
@@ -122,6 +48,7 @@ void initTetris() {
         SDL_RemoveTimer(cb_timer);
     }
     cb_timer = 0;
+
     TETROMINO_ACTION = NONE;
 
     // Empty the playfield
@@ -238,21 +165,12 @@ void lockTetromino() {
 
 void render_score() {
     // Show tetris score after all tetris operations are finished
-    // SDL_Color textColor = { 0x11, 0x1F, 0x3F };
-    SDL_Color textColor = { 0, 0, 0 };
+    SDL_Color textColor = { 0x11, 0x1F, 0x3F };
 
     sds string_score = printfcomma(score);
 
-    TTF_Font* gfont = TTF_OpenFont(NULL, 24);
-    if (gfont == NULL) {
-        printf("Erreur lors du chargement de la police: %s\n", TTF_GetError());
-        TTF_Quit();
-        SDL_DestroyRenderer(render);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-    }
-    SDL_Surface* textSurface = TTF_RenderText_Blended(gfont, string_score, textColor);
-//Blended ou solid ?
+    SDL_Surface* textSurface = TTF_RenderText_Blended(gFont, string_score, textColor);
+
     sdsfree(string_score);
 
     if (textSurface == NULL) {

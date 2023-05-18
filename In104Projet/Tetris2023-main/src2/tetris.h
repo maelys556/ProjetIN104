@@ -33,14 +33,14 @@ typedef struct {
 
 typedef enum {
     NONE,
-    DOWN, 
+    DOWN,
     LEFT,
     RIGHT,
     DROP,
     ROTATE,
+    // soft-drop tetrominos
     AUTO_DROP,
-    RESTART,
-
+    RESTART
 } Tetris_Action;
 
 typedef enum {
@@ -57,12 +57,10 @@ typedef enum {
 
 // default tetris action
 // defines the action to apply to current tetromino
- 
 extern Tetris_Action TETROMINO_ACTION;
 
-// Color in function of the form of the Tetromino 
-
-const static Tetromino TETRA_I = { // je comprends pas les 4 entrées
+// tetromino data
+const static Tetromino TETRA_I = {
     {0x0F00, 0x2222, 0x00F0, 0x4444},
     TEAL
 };
