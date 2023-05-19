@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include "SDL_pixels.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
 #define FRAME_DELAY 1000 / 60
 #define MIN_FRAME_DELAY 10
@@ -21,9 +23,15 @@
 #define WINDOW_HEIGHT PLAYFIELD_HEIGHT * (BLOCK_SIZE + 1) + 1
 #define WINDOW_WIDTH PLAYFIELD_WIDTH * (BLOCK_SIZE + 1) + 1
 
+//export LIBGL_ALWAYS_INDIRECT=1
+//echo $XDG_RUNTIME_DIR
+
 bool game_over = false;
 bool render_changed = false;
 bool newpiece = true;
+bool endgame = false;
+bool quit = false;
+SDL_Color color = {255, 255, 255}; // Couleur du texte (blanc)
 
 typedef struct {
     int x, y;
@@ -40,7 +48,14 @@ typedef struct {
     int rotation;
     int height;
     int width;
+    SDL_Color color;
 } tetromino;
+
+typedef struct {
+    int pieces[NUM_TETROMINOS];
+    int index;
+    int size;
+} Bag;
 
 typedef struct {
     Board grid;
@@ -55,11 +70,8 @@ SDL_Renderer* renderer = NULL;
 TTF_Font* font = NULL;
 GameState game;
 
-Bag bag={0};
-    initializeBag(&bag);
-
 bool init() {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         printf("Erreur lors de l'initialisation de SDL: %s\n", SDL_GetError());
         return false;
     }
@@ -326,7 +338,14 @@ void clear_lines(char board[BOARD_HEIGHT][BOARD_WIDTH], int* lines_to_clear, int
     }
 }
 
-
+bool inHiddenLayer(Board board) {
+    for (int col = 0; col < PLAYFIELD_HEIGHT; col++) {
+        if (board.grid[0][col] != 0) {
+            return true; // Une pièce est présente dans la ligne cachée
+        }
+    }
+    return false; // Aucune pièce n'est présente dans la ligne cachée
+}
 
 void lock_tetromino(GameState *game, char grid[BOARD_HEIGHT][BOARD_WIDTH], tetromino tetromino) {
     int i, j;
@@ -342,19 +361,7 @@ void lock_tetromino(GameState *game, char grid[BOARD_HEIGHT][BOARD_WIDTH], tetro
     }
 }
 
-bool inHiddenLayer(Board board) {
-    for (int col = 0; col < COLUMN; col++)
-    {
-        if (board[0][col] != 0)
-        {
-            return true; // Une pièce est présente dans la ligne cachée
-        }
-    }
-    return false; // Aucune pièce n'est présente dans la ligne cachée
-}
-
-void initializeBag(Bag *bag)
-{
+void initializeBag(Bag *bag){
     // Initialisation des valeurs du sac de pièces
     for (int i = 0; i < NUM_TETROMINOS; i++)
     {
@@ -365,8 +372,7 @@ void initializeBag(Bag *bag)
     bag->size = NUM_TETROMINOS;  // Taille du sac
 }
 
-int updateBag(Bag *bag)
-{
+int updateBag(Bag *bag){
     if (bag->index >= bag->size)
     {
         // Mélange des pièces dans le sac
@@ -387,9 +393,32 @@ int updateBag(Bag *bag)
     return choice; // Renvoie l'indice de la pièce sélectionnée
 }
 
-void hardDrop(Board *board, Tetromino *piece, bool *newpiece, bool checkCollision)
-{
-    while (!checkCollision && !collision(*board, *piece, 0, 1))
+bool collision(Board* board, const tetromino tetromino, int dx, int dy) {
+    for (int i = 0; i < TETROMINO_SIZE; i++) {
+        for (int j = 0; j < TETROMINO_SIZE; j++) {
+            if (tetromino.shape[i][j] != 0) {
+                int x = tetromino.x + j + dx;
+                int y = tetromino.y + i + dy;
+
+                // Vérifier les collisions avec les bords du plateau
+                if (x < 0 || x >= BOARD_WIDTH || y >= BOARD_HEIGHT) {
+                    return true; // Collision avec le bord du plateau
+                }
+
+                // Vérifier les collisions avec les blocs du plateau
+                if (y >= 0 && board->grid[y][x] != EMPTY_BLOCK) {
+                    return true; // Collision avec un bloc du plateau
+                }
+            }
+        }
+    }
+
+    return false; // Pas de collision détectée
+}
+
+
+void hardDrop(Board *board, tetromino *piece, bool *newpiece, bool checkCollision) {
+    while (!checkCollision && !collision(board, *piece, 0, 1))
     {
         piece->y++; // Déplacement vers le bas
     }
@@ -397,15 +426,15 @@ void hardDrop(Board *board, Tetromino *piece, bool *newpiece, bool checkCollisio
     piece->y--; // Annuler le dernier déplacement vers le bas
     
     // Fixer la pièce sur le plateau
-    for (int row = 0; row < PIECE_SIZE; row++)
+    for (int row = 0; row < TETROMINO_SIZE; row++)
     {
-        for (int col = 0; col < PIECE_SIZE; col++)
+        for (int col = 0; col < TETROMINO_SIZE; col++)
         {
             if (piece->shape[row][col] != 0)
             {
                 int boardRow = piece->y + row;
                 int boardCol = piece->x + col;
-                (*board)[boardRow][boardCol] = piece->color;
+                // (&board)[boardRow][boardCol] = piece->color;
             }
         }
     }
@@ -413,27 +442,25 @@ void hardDrop(Board *board, Tetromino *piece, bool *newpiece, bool checkCollisio
     *newpiece = true; // Créer une nouvelle pièce
 }
 
-void drawGrid(SDL_Renderer* renderer)
-{
+void drawGrid(SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE); // Couleur de la grille (blanc)
     
     // Dessine les lignes verticales de la grille
-    for (int x = 0; x <= (COLUMN+9) * CELLSIZE; x += CELLSIZE)
+    for (int x = 0; x <= (PLAYFIELD_HEIGHT+9) * BLOCK_SIZE; x += BLOCK_SIZE)
     {
-        SDL_RenderDrawLine(renderer, x, 0, x, ROW * CELLSIZE);
+        SDL_RenderDrawLine(renderer, x, 0, x, PLAYFIELD_WIDTH * BLOCK_SIZE);
     }
     
     // Dessine les lignes horizontales de la grille
-    for (int y = 0; y <= ROW * CELLSIZE; y += CELLSIZE)
+    for (int y = 0; y <= PLAYFIELD_WIDTH * BLOCK_SIZE; y += BLOCK_SIZE)
     {
-        SDL_RenderDrawLine(renderer, 0, y, (COLUMN+9) * CELLSIZE, y);
+        SDL_RenderDrawLine(renderer, 0, y, (PLAYFIELD_HEIGHT+9) * BLOCK_SIZE, y);
     }
     
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE); // Réinitialise la couleur du rendu
 }
 
-void drawGhost(const Board& board, const Tetromino& piece, SDL_Renderer* renderer)
-{
+void drawGhost(Board* board, tetromino piece, SDL_Renderer* renderer){
     int ghostY = piece.y;
     
     // Trouver la position verticale la plus basse où la pièce peut tomber
@@ -443,17 +470,17 @@ void drawGhost(const Board& board, const Tetromino& piece, SDL_Renderer* rendere
     }
     
     // Dessiner l'ombre de la pièce
-    for (int row = 0; row < PIECE_SIZE; row++)
-    {
-        for (int col = 0; col < PIECE_SIZE; col++)
+    for (int row = 0; row < TETROMINO_SIZE; row++)
+   {
+        for (int col = 0; col < TETROMINO_SIZE; col++)
         {
             if (piece.shape[row][col] != 0)
             {
-                int x = (piece.x + col) * CELLSIZE;
-                int y = (ghostY + row) * CELLSIZE;
+                int x = (piece.x + col) * BLOCK_SIZE;
+                int y = (ghostY + row) * BLOCK_SIZE;
                 
                 SDL_SetRenderDrawColor(renderer, 100, 100, 100, SDL_ALPHA_OPAQUE); // Couleur de l'ombre (gris)
-                SDL_Rect rect = {x, y, CELLSIZE, CELLSIZE};
+                SDL_Rect rect = {x, y, BLOCK_SIZE, BLOCK_SIZE};
                 SDL_RenderFillRect(renderer, &rect);
             }
         }
@@ -462,33 +489,31 @@ void drawGhost(const Board& board, const Tetromino& piece, SDL_Renderer* rendere
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE); // Réinitialise la couleur du rendu
 }
 
-void drawBag(const Bag& bag, SDL_Renderer* renderer)
-{
+void drawBag(Bag bag, SDL_Renderer* renderer){
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE); // Couleur du contour de la pièce (blanc)
     
     // Coordonnées du rectangle d'affichage de la prochaine pièce
-    int startX = (COLUMN + 4) * CELLSIZE;
-    int startY = 2 * CELLSIZE;
+    int startX = (PLAYFIELD_HEIGHT + 4) * BLOCK_SIZE;
+    int startY = 2 * BLOCK_SIZE;
     
     // Dessiner un rectangle de fond pour la prochaine pièce
-    SDL_Rect rect = {startX, startY, 5 * CELLSIZE, 5 * CELLSIZE};
+    SDL_Rect rect = {startX, startY, 5 * BLOCK_SIZE, 5 * BLOCK_SIZE};
     SDL_RenderDrawRect(renderer, &rect);
     
     // Dessiner la prochaine pièce
-    if (bag.size() > 0)
-    {
-        const Tetromino& nextPiece = *Tetroarray[bag[0]];
+    if (bag.size > 0) {
+        tetromino nextPiece = generate_random_tetromino();
         
-        for (int row = 0; row < PIECE_SIZE; row++)
+        for (int row = 0; row < TETROMINO_SIZE; row++)
         {
-            for (int col = 0; col < PIECE_SIZE; col++)
+            for (int col = 0; col < TETROMINO_SIZE; col++)
             {
                 if (nextPiece.shape[row][col] != 0)
                 {
-                    int x = startX + col * CELLSIZE;
-                    int y = startY + row * CELLSIZE;
+                    int x = startX + col * BLOCK_SIZE;
+                    int y = startY + row * BLOCK_SIZE;
                     
-                    SDL_Rect cellRect = {x, y, CELLSIZE, CELLSIZE};
+                    SDL_Rect cellRect = {x, y, BLOCK_SIZE, BLOCK_SIZE};
                     SDL_RenderFillRect(renderer, &cellRect);
                 }
             }
@@ -498,56 +523,94 @@ void drawBag(const Bag& bag, SDL_Renderer* renderer)
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE); // Réinitialise la couleur du rendu
 }
 
-void endGame(Board* board)
-{
+void endGame(Board* board){
     // Code pour afficher l'écran de fin de jeu
     // Cela peut inclure l'affichage du message "Game Over" ou toute autre interface graphique spécifique à votre jeu.
     // Par exemple, vous pouvez utiliser SDL pour afficher du texte à l'écran.
     // Voici un exemple basique pour effacer le plateau de jeu :
     
-    for (int row = 0; row < ROW; row++)
+    for (int row = 0; row < PLAYFIELD_WIDTH; row++)
     {
-        for (int col = 0; col < COLUMN; col++)
+        for (int col = 0; col < PLAYFIELD_HEIGHT; col++)
         {
             board->grid[row][col] = 0;
         }
     }
 }
 
-void clearScoreBoard(SDL_Renderer* renderer)
-{
+void renderText(SDL_Renderer* renderer, int a, int b, int c) {
+    // Convertir les valeurs a, b et c en chaîne de caractères si nécessaire
+    char textA[20];
+    sprintf(textA, "%d", a);
+    
+    char textB[20];
+    sprintf(textB, "%d", b);
+    
+    char textC[20];
+    sprintf(textC, "%d", c);
+    
+    // Configurer la couleur, la police, etc. pour le rendu du texte
+    // ...
+    
+    // Rendu du texte sur le renderer
+    // Exemple : rendu des trois valeurs côte à côte avec un espacement fixe
+    SDL_Surface* surfaceA = TTF_RenderText_Solid(font, textA, color);
+    SDL_Texture* textureA = SDL_CreateTextureFromSurface(renderer, surfaceA);
+    SDL_Rect rectA = { 10, 10, surfaceA->w, surfaceA->h };
+    SDL_RenderCopy(renderer, textureA, NULL, &rectA);
+    
+    SDL_Surface* surfaceB = TTF_RenderText_Solid(font, textB, color);
+    SDL_Texture* textureB = SDL_CreateTextureFromSurface(renderer, surfaceB);
+    SDL_Rect rectB = { 10 + surfaceA->w + 10, 10, surfaceB->w, surfaceB->h };
+    SDL_RenderCopy(renderer, textureB, NULL, &rectB);
+    
+    SDL_Surface* surfaceC = TTF_RenderText_Solid(font, textC, color);
+    SDL_Texture* textureC = SDL_CreateTextureFromSurface(renderer, surfaceC);
+    SDL_Rect rectC = { 10 + surfaceA->w + 10 + surfaceB->w + 10, 10, surfaceC->w, surfaceC->h };
+    SDL_RenderCopy(renderer, textureC, NULL, &rectC);
+    
+    // Libérer la mémoire utilisée par les surfaces et textures
+    SDL_FreeSurface(surfaceA);
+    SDL_FreeSurface(surfaceB);
+    SDL_FreeSurface(surfaceC);
+    SDL_DestroyTexture(textureA);
+    SDL_DestroyTexture(textureB);
+    SDL_DestroyTexture(textureC);
+}
+
+
+void clearScoreBoard(SDL_Renderer* renderer){
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE); // Couleur de fond (noir)
     SDL_RenderClear(renderer); // Efface le rendu avec la couleur de fond définie
 }
 
-void drawScoreBoard(SDL_Renderer* renderer, int score, int lines)
-{
+void drawScoreBoard(SDL_Renderer* renderer, int score, int lines){
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE); // Couleur du texte (blanc)
     
     // Affiche le score en haut à gauche de l'écran
-    renderText(renderer, scoreText, 10, 10);
+    renderText(renderer, score, 10, 10);
     
     // Affiche le nombre de lignes effacées à droite du score
-    renderText(renderer, linesText, 10 + scoreText.length() * 8, 10);
+    renderText(renderer, lines, 10 + score * 8, 10);
     
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE); // Réinitialise la couleur du rendu
 }
 
-void setCoords(tetromino* tetromino, int x, int y)
-{
-    piece->x = x;
-    piece->y = y;
+void setCoords(tetromino* tetromino, int x, int y){
+    tetromino->x = x;
+    tetromino->y = y;
 }
 
 
 // Gestion des événements
-void handleEvents() {
+void handleEvents(Bag bag){
     while(!quit){
-        if(inHiddenLayer(board)) endgame=true;
+        Board board = game.grid;
+        if(inHiddenLayer(board)) endgame==true;
         if (newpiece){ // Create a newpiece when "newpiece" is set to through
             int choice = updateBag(&bag);
-            tetromino piece=*Tetroarray[choice];
-            setCoords(&tetromino,5,2);
+            // tetromino piece=*Tetroarray[choice];
+            setCoords(&(game.current_tetromino),5,2);
             newpiece=false;
         }
         int value=0;
@@ -572,6 +635,7 @@ void handleEvents() {
                         break;
                 }
             }
+        }
     }
 }
 
@@ -646,13 +710,13 @@ void render(GameState *game) {
 
 
 // Boucle principale du jeu
-void gameLoop() {
+void gameLoop(Bag bag) {
     while (!game_over) {
         Uint32 lastTime = SDL_GetTicks();
         Uint32 currentTime;
         Uint32 deltaTime;
 
-        handleEvents();
+        handleEvents(bag);
         update_game(&game);
         updateRender();
         render(&game);
@@ -668,11 +732,13 @@ void gameLoop() {
 
 
 // Fonction principale
-int main(int argc, char* argv[]) {
+int main(){
+    Bag bag={0};
+    initializeBag(&bag);
     if (!init()) {
         return 1;
     }
-    gameLoop();
+    gameLoop(bag);
 
     closeGame();
 
